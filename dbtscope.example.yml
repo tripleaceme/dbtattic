@@ -1,0 +1,27 @@
+# Copy to dbtscope.yml next to dbt_project.yml.
+#
+# Resolution order, highest first:
+#   --store flag  >  DBTSCOPE_STORE  >  dbtscope.yml  >  vars.dbtscope  >  ./.dbtscope
+# The VS Code extension runs the same resolution, so the store is never
+# configured in two places.
+
+store: ./.dbtscope
+# store: s3://acme-dbt-meta/prod        # 0.2
+# store: snowflake://ACCOUNT/DB/SCHEMA  # 0.2
+
+capture:
+  # before-run  preserves the previous invocation's artifacts, which a bare
+  #             `dbt parse`, `dbt compile` or `dbt ls` would otherwise destroy
+  # after-run   records the invocation that just finished
+  # both        (default) -- safe, because capture is idempotent on invocation_id
+  when: both
+
+  artifacts:
+    - manifest
+    - run_results
+    - sources
+    - catalog
+
+retention:
+  full: 90d      # not yet enforced -- 0.2
+  then: monthly

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dbtscope and a real dbt to test against
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . "dbt-core~=1.10" dbt-duckdb
+
+      - name: End-to-end smoke test
+        run: python tests/smoke.py
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build and check distributions
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+          python -m twine check dist/*
+
+      - name: Fail if the sdist carries build artefacts
+        run: |
+          if tar tzf dist/*.tar.gz | grep -E 'node_modules|/target/|/logs/'; then
+            echo "sdist contains files it should not" >&2
+            exit 1
+          fi
+
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Compile the VS Code extension
+        working-directory: vscode
+        run: |
+          npm install
+          npm run compile

@@ -1,0 +1,82 @@
+{
+  "name": "dbtscope",
+  "displayName": "dbtscope",
+  "description": "Browse and query your dbt artifact history without leaving the editor.",
+  "version": "0.1.0",
+  "publisher": "tripleaceme",
+  "license": "Apache-2.0",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Data Science", "Visualization", "Other"],
+  "keywords": ["dbt", "duckdb", "analytics engineering", "data", "lineage"],
+  "activationEvents": ["workspaceContains:**/dbt_project.yml"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "dbtscope",
+      "properties": {
+        "dbtscope.cliPath": {
+          "type": "string",
+          "default": "dbtscope",
+          "description": "Path to the dbtscope executable. Point this at a virtualenv's bin/dbtscope if it is not on PATH."
+        },
+        "dbtscope.projectDir": {
+          "type": "string",
+          "default": "",
+          "description": "dbt project root. Empty means auto-discover by searching for dbt_project.yml."
+        },
+        "dbtscope.historyLimit": {
+          "type": "number",
+          "default": 25,
+          "description": "How many invocations to list in the tree."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dbtscope",
+          "title": "dbtscope",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "dbtscope": [
+        { "id": "dbtscope.invocations", "name": "Invocations" },
+        { "id": "dbtscope.insights", "name": "Insights" }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "dbtscope.invocations",
+        "contents": "No dbtscope store found yet.\n\nThe store is created the first time artifacts are captured.\n\n[Capture now](command:dbtscope.capture)\n\nIf the CLI is not on your PATH, set `dbtscope.cliPath`.\n\n[Open settings](command:dbtscope.openSettings)"
+      }
+    ],
+    "commands": [
+      { "command": "dbtscope.refresh", "title": "Refresh", "category": "dbtscope", "icon": "$(refresh)" },
+      { "command": "dbtscope.capture", "title": "Capture Artifacts Now", "category": "dbtscope", "icon": "$(save)" },
+      { "command": "dbtscope.rebuild", "title": "Rebuild Store from Archive", "category": "dbtscope" },
+      { "command": "dbtscope.query", "title": "New Query", "category": "dbtscope", "icon": "$(search)" },
+      { "command": "dbtscope.copyStatePath", "title": "Copy --state Path (Last Success)", "category": "dbtscope" },
+      { "command": "dbtscope.openSettings", "title": "Open Settings", "category": "dbtscope" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "dbtscope.query", "when": "view == dbtscope.invocations", "group": "navigation@1" },
+        { "command": "dbtscope.capture", "when": "view == dbtscope.invocations", "group": "navigation@2" },
+        { "command": "dbtscope.refresh", "when": "view == dbtscope.invocations", "group": "navigation@3" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Cleaned customer master.
+    columns:
+      - name: customer_id
+        description: Unique customer identifier.
+        tests: [unique, not_null]
+
+  - name: stg_orders
+    description: One row per order.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['placed', 'shipped', 'completed', 'returned']
+
+  - name: stg_payments
+    description: One row per payment.
+    columns:
+      - name: payment_id
+        tests: [unique, not_null]
+
+  - name: customer_orders
+    description: Orders enriched with payment totals.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+
+  - name: customer_summary
+    description: One row per customer with lifetime value.
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: number_of_orders
+        tests: [not_null]

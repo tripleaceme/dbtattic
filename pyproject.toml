@@ -1,0 +1,64 @@
+[project]
+name = "dbtscope"
+version = "0.1.0"
+description = "Preserve and query dbt artifact history on any warehouse, backed by DuckDB."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Ayoade Adegbite", email = "hello@ayoadeabel.tech" }]
+maintainers = [{ name = "Ayoade Adegbite", email = "hello@ayoadeabel.tech" }]
+keywords = [
+    "dbt",
+    "duckdb",
+    "analytics-engineering",
+    "data-engineering",
+    "metadata",
+    "observability",
+    "lineage",
+    "slim-ci",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Topic :: Database",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: System :: Monitoring",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+dependencies = [
+    "duckdb>=1.0",
+    "typer>=0.12",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tripleaceme/dbtscope"
+Repository = "https://github.com/tripleaceme/dbtscope"
+Issues = "https://github.com/tripleaceme/dbtscope/issues"
+Changelog = "https://github.com/tripleaceme/dbtscope/blob/main/CHANGELOG.md"
+
+[project.scripts]
+dbtscope = "dbtscope.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dbtscope"]
+
+[tool.hatch.build.targets.sdist]
+# The VS Code extension is a separate artefact shipped to the marketplace, so it
+# stays out of the Python sdist -- and with it node_modules, which hatchling
+# would otherwise sweep in.
+only-include = ["src/dbtscope", "README.md", "LICENSE", "CHANGELOG.md", "dbtscope.example.yml"]
+exclude = ["vscode", "tests/fixtures/*/target", "tests/fixtures/*/logs"]
