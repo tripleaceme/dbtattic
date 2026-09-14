@@ -1,5 +1,10 @@
 # dbtscope
 
+[![CI](https://github.com/tripleaceme/dbtscope/actions/workflows/ci.yml/badge.svg)](https://github.com/tripleaceme/dbtscope/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/dbtscope.svg)](https://pypi.org/project/dbtscope/)
+[![Python](https://img.shields.io/pypi/pyversions/dbtscope.svg)](https://pypi.org/project/dbtscope/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 Preserve and query dbt artifact history — on any warehouse, with no warehouse compute.
 
 ## The problem
