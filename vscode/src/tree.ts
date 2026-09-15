@@ -60,7 +60,7 @@ export class InvocationsProvider implements vscode.TreeDataProvider<Item> {
   }
 
   private async invocations(): Promise<Item[]> {
-    const limit = vscode.workspace.getConfiguration('dbtscope').get<number>('historyLimit') ?? 25;
+    const limit = vscode.workspace.getConfiguration('dbtattic').get<number>('historyLimit') ?? 25;
     const res = await cli.query(
       `select invocation_id, generated_at, coalesce(command,'parse') as command,
               coalesce(target,'-') as target, nodes_run, failures, node_seconds
@@ -213,7 +213,7 @@ export class InsightsProvider implements vscode.TreeDataProvider<Item> {
       item.description = i.detail;
       item.iconPath = new vscode.ThemeIcon(i.icon);
       item.command = {
-        command: 'dbtscope.runInsight',
+        command: 'dbtattic.runInsight',
         title: 'Run',
         arguments: [i.label, i.sql]
       };

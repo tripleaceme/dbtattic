@@ -1,8 +1,8 @@
-# dbtscope
+# dbtattic
 
-[![CI](https://github.com/tripleaceme/dbtscope/actions/workflows/ci.yml/badge.svg)](https://github.com/tripleaceme/dbtscope/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/dbtscope.svg)](https://pypi.org/project/dbtscope/)
-[![Python](https://img.shields.io/pypi/pyversions/dbtscope.svg)](https://pypi.org/project/dbtscope/)
+[![CI](https://github.com/tripleaceme/dbtattic/actions/workflows/ci.yml/badge.svg)](https://github.com/tripleaceme/dbtattic/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/dbtattic.svg)](https://pypi.org/project/dbtattic/)
+[![Python](https://img.shields.io/pypi/pyversions/dbtattic.svg)](https://pypi.org/project/dbtattic/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 Preserve and query dbt artifact history — on any warehouse, with no warehouse compute.
@@ -37,19 +37,19 @@ statements against your warehouse. That is a structural tax, not an implementati
 Snowflake's dbt Projects feature preserves artifacts automatically — if you are on Snowflake.
 Databricks, BigQuery, Postgres and ClickHouse users hand-roll it.
 
-dbtscope runs as a separate process, so it costs no warehouse compute, works identically on every
+dbtattic runs as a separate process, so it costs no warehouse compute, works identically on every
 adapter, and can capture things a dbt package cannot see: `logs/dbt.log`, `compiled/`, `run/`.
 
 ## Install
 
 ```bash
-pip install dbtscope        # or: uvx dbtscope
+pip install dbtattic        # or: uvx dbtattic
 ```
 
 From source:
 
 ```bash
-git clone https://github.com/tripleaceme/dbtscope && cd dbtscope
+git clone https://github.com/tripleaceme/dbtattic && cd dbtattic
 uv venv && uv pip install -e . "dbt-core~=1.10" dbt-duckdb
 python tests/smoke.py       # end-to-end against the bundled fixture project
 ```
@@ -58,24 +58,24 @@ python tests/smoke.py       # end-to-end against the bundled fixture project
 
 ```bash
 # capture whatever is in target/ right now (idempotent)
-dbtscope capture
+dbtattic capture
 
 # capture, run dbt, capture again — exit code and output pass straight through
-dbtscope run -- dbt build --target prod
+dbtattic run -- dbt build --target prod
 
 # state comparison and deferral, on any adapter
-dbt build --select state:modified --defer --state $(dbtscope state --last-success)
+dbt build --select state:modified --defer --state $(dbtattic state --last-success)
 
 # query the history
-dbtscope history
-dbtscope query "select * from v_node_runtime where name = 'customer_summary'"
+dbtattic history
+dbtattic query "select * from v_node_runtime where name = 'customer_summary'"
 ```
 
 Capture before every dbt command without changing how you type them:
 
 ```bash
 # .zshrc — one line, inspectable, reversible
-dbt() { dbtscope capture --quiet --phase pre; command dbt "$@"; }
+dbt() { dbtattic capture --quiet --phase pre; command dbt "$@"; }
 ```
 
 `on-run-start` cannot do this: hooks fire *after* parsing, by which point `manifest.json` is
@@ -84,15 +84,15 @@ already gone.
 ## Configure
 
 ```yaml
-# dbtscope.yml, next to dbt_project.yml
-store: ./.dbtscope                 # or s3://…  (0.2)
+# dbtattic.yml, next to dbt_project.yml
+store: ./.dbtattic                 # or s3://…  (0.2)
 capture:
   when: both                       # before-run | after-run | both
   artifacts: [manifest, run_results, sources, catalog]
 ```
 
-Resolution order, highest first: `--store` → `DBTSCOPE_STORE` → `dbtscope.yml` →
-`vars.dbtscope` in `dbt_project.yml` → `./.dbtscope`.
+Resolution order, highest first: `--store` → `DBTATTIC_STORE` → `dbtattic.yml` →
+`vars.dbtattic` in `dbt_project.yml` → `./.dbtattic`.
 
 ## Schema
 
@@ -132,11 +132,11 @@ Two things that are *not* the identity key, both learned the hard way:
 The archived JSON is the source of truth; DuckDB is a cache derived from it.
 
 ```bash
-dbtscope rebuild     # re-derive the store from archive/
+dbtattic rebuild     # re-derive the store from archive/
 ```
 
 That makes a schema change or a fixed extraction bug a rebuild rather than a migration —
-opening a store written by an older dbtscope reports the version mismatch and points here.
+opening a store written by an older dbtattic reports the version mismatch and points here.
 
 ## VS Code extension
 
@@ -147,7 +147,7 @@ changed models), and a themed query panel over the same store.
 cd vscode && npm install && npm run package
 ```
 
-It shells out to this CLI (`dbtscope query --json`, `dbtscope info --json`) rather than
+It shells out to this CLI (`dbtattic query --json`, `dbtattic info --json`) rather than
 embedding DuckDB: no native dependencies, and the schema has one definition instead of two
 that drift. The packaged vsix is ~12 KB.
 

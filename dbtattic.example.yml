@@ -1,11 +1,11 @@
-# Copy to dbtscope.yml next to dbt_project.yml.
+# Copy to dbtattic.yml next to dbt_project.yml.
 #
 # Resolution order, highest first:
-#   --store flag  >  DBTSCOPE_STORE  >  dbtscope.yml  >  vars.dbtscope  >  ./.dbtscope
+#   --store flag  >  DBTATTIC_STORE  >  dbtattic.yml  >  vars.dbtattic  >  ./.dbtattic
 # The VS Code extension runs the same resolution, so the store is never
 # configured in two places.
 
-store: ./.dbtscope
+store: ./.dbtattic
 # store: s3://acme-dbt-meta/prod        # 0.2
 # store: snowflake://ACCOUNT/DB/SCHEMA  # 0.2
 

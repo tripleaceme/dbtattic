@@ -10,7 +10,7 @@ vscode/out/
 *.vsix
 
 # the store itself is local state, never committed
-.dbtscope/
+.dbtattic/
 
 # fixture project outputs
 tests/fixtures/*/target/

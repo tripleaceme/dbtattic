@@ -1,21 +1,21 @@
-# dbtscope for VS Code
+# dbtattic for VS Code
 
 Browse and query your dbt artifact history without leaving the editor.
 
 dbt overwrites `target/` on every invocation — `manifest.json` during parsing, `run_results.json`
-at the end of a run. The [dbtscope CLI](https://pypi.org/project/dbtscope/) preserves those
+at the end of a run. The [dbtattic CLI](https://pypi.org/project/dbtattic/) preserves those
 artifacts and normalises them into DuckDB. This extension is the window onto that store.
 
 ## Requires the CLI
 
 ```bash
-pip install dbtscope
+pip install dbtattic
 ```
 
 If it is not on your `PATH` — a project virtualenv, say — point the extension at it:
 
 ```json
-{ "dbtscope.cliPath": "${workspaceFolder}/.venv/bin/dbtscope" }
+{ "dbtattic.cliPath": "${workspaceFolder}/.venv/bin/dbtattic" }
 ```
 
 The extension shells out to the CLI rather than embedding DuckDB. That keeps it free of native
@@ -48,19 +48,19 @@ came from. Click to open a query.
 
 | Command | Does |
 |---|---|
-| `dbtscope: New Query` | open the query panel |
-| `dbtscope: Capture Artifacts Now` | capture whatever is in `target/` right now |
-| `dbtscope: Rebuild Store from Archive` | re-derive the store from the archived JSON |
-| `dbtscope: Copy --state Path (Last Success)` | clipboard path for `dbt build --defer --state …` |
-| `dbtscope: Refresh` | reload the views |
+| `dbtattic: New Query` | open the query panel |
+| `dbtattic: Capture Artifacts Now` | capture whatever is in `target/` right now |
+| `dbtattic: Rebuild Store from Archive` | re-derive the store from the archived JSON |
+| `dbtattic: Copy --state Path (Last Success)` | clipboard path for `dbt build --defer --state …` |
+| `dbtattic: Refresh` | reload the views |
 
 ## Settings
 
 | Setting | Default | |
 |---|---|---|
-| `dbtscope.cliPath` | `dbtscope` | path to the executable |
-| `dbtscope.projectDir` | *(auto)* | dbt project root; empty searches for `dbt_project.yml` |
-| `dbtscope.historyLimit` | `25` | invocations listed in the tree |
+| `dbtattic.cliPath` | `dbtattic` | path to the executable |
+| `dbtattic.projectDir` | *(auto)* | dbt project root; empty searches for `dbt_project.yml` |
+| `dbtattic.historyLimit` | `25` | invocations listed in the tree |
 
-The store location itself is **not** configured here. It comes from `dbtscope.yml` in the project,
+The store location itself is **not** configured here. It comes from `dbtattic.yml` in the project,
 and the extension runs the same resolution the CLI does, so it is never set in two places.

@@ -2,10 +2,10 @@
 
 Precedence, highest first:
     1. --store CLI flag
-    2. DBTSCOPE_STORE env var
-    3. dbtscope.yml in the project root
-    4. vars.dbtscope in dbt_project.yml
-    5. ./.dbtscope
+    2. DBTATTIC_STORE env var
+    3. dbtattic.yml in the project root
+    4. vars.dbtattic in dbt_project.yml
+    5. ./.dbtattic
 
 The VS Code extension runs this same resolution against the workspace root, so
 the store never has to be configured in two places.
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_STORE = ".dbtscope"
+DEFAULT_STORE = ".dbtattic"
 DEFAULT_ARTIFACTS = ["manifest", "run_results", "sources", "catalog"]
 
 
@@ -31,7 +31,7 @@ class Config:
     log_path: Path
     artifacts: list[str] = field(default_factory=lambda: list(DEFAULT_ARTIFACTS))
     when: str = "both"  # before-run | after-run | both
-    source: str = "default"  # where the store setting came from, for `dbtscope info`
+    source: str = "default"  # where the store setting came from, for `dbtattic info`
 
     @property
     def is_local(self) -> bool:
@@ -60,7 +60,7 @@ def find_project_dir(start: Path | None = None) -> Path:
             return candidate
     raise FileNotFoundError(
         "No dbt_project.yml found in this directory or any parent. "
-        "Run dbtscope from inside a dbt project, or pass --project-dir."
+        "Run dbtattic from inside a dbt project, or pass --project-dir."
     )
 
 
@@ -106,9 +106,9 @@ def resolve_target(project_dir: Path, profiles_dir: str | None = None) -> str | 
 def load(store: str | None = None, project_dir: Path | None = None) -> Config:
     proj = project_dir.resolve() if project_dir else find_project_dir()
 
-    scope_yml = _read_yaml(proj / "dbtscope.yml")
+    scope_yml = _read_yaml(proj / "dbtattic.yml")
     dbt_yml = _read_yaml(proj / "dbt_project.yml")
-    from_vars = (dbt_yml.get("vars") or {}).get("dbtscope") or {}
+    from_vars = (dbt_yml.get("vars") or {}).get("dbtattic") or {}
 
     # dbt lets the project override where artifacts land; honour it.
     target_path = Path(os.environ.get("DBT_TARGET_PATH") or dbt_yml.get("target-path") or "target")
@@ -116,10 +116,10 @@ def load(store: str | None = None, project_dir: Path | None = None) -> Config:
 
     if store:
         resolved, src = store, "--store flag"
-    elif os.environ.get("DBTSCOPE_STORE"):
-        resolved, src = os.environ["DBTSCOPE_STORE"], "DBTSCOPE_STORE env var"
+    elif os.environ.get("DBTATTIC_STORE"):
+        resolved, src = os.environ["DBTATTIC_STORE"], "DBTATTIC_STORE env var"
     elif scope_yml.get("store"):
-        resolved, src = scope_yml["store"], "dbtscope.yml"
+        resolved, src = scope_yml["store"], "dbtattic.yml"
     elif from_vars.get("store"):
         resolved, src = from_vars["store"], "dbt_project.yml vars"
     else:

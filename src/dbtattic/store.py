@@ -17,7 +17,7 @@ import duckdb
 SCHEMA_VERSION = 2
 
 DDL = """
-create table if not exists dbtscope_meta (
+create table if not exists dbtattic_meta (
     schema_version integer not null
 );
 
@@ -231,15 +231,15 @@ class SchemaOutOfDate(Exception):
     def __init__(self, found: int) -> None:
         self.found = found
         super().__init__(
-            f"store schema is v{found}, this dbtscope expects v{SCHEMA_VERSION}. "
-            "Run `dbtscope rebuild` -- the archived JSON is the source of truth, "
+            f"store schema is v{found}, this dbtattic expects v{SCHEMA_VERSION}. "
+            "Run `dbtattic rebuild` -- the archived JSON is the source of truth, "
             "so nothing is lost."
         )
 
 
 def _stored_version(con: duckdb.DuckDBPyConnection) -> int | None:
     try:
-        row = con.execute("select max(schema_version) from dbtscope_meta").fetchone()
+        row = con.execute("select max(schema_version) from dbtattic_meta").fetchone()
         return row[0] if row else None
     except duckdb.Error:
         return None  # pre-versioning or empty file
@@ -261,8 +261,8 @@ def connect(
     if not read_only:
         con.execute(DDL)
         con.execute(VIEWS)
-        if con.execute("select count(*) from dbtscope_meta").fetchone()[0] == 0:
-            con.execute("insert into dbtscope_meta values (?)", [SCHEMA_VERSION])
+        if con.execute("select count(*) from dbtattic_meta").fetchone()[0] == 0:
+            con.execute("insert into dbtattic_meta values (?)", [SCHEMA_VERSION])
     return con
 
 

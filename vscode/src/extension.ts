@@ -13,20 +13,20 @@ async function refreshStatus(): Promise<void> {
   try {
     const i = await cli.info();
     if (i.stale) {
-      status.text = '$(warning) dbtscope: rebuild needed';
+      status.text = '$(warning) dbtattic: rebuild needed';
       status.tooltip = i.message ?? 'Store schema is out of date.';
-      status.command = 'dbtscope.rebuild';
+      status.command = 'dbtattic.rebuild';
     } else if (!i.exists) {
-      status.text = '$(circle-outline) dbtscope: no store';
+      status.text = '$(circle-outline) dbtattic: no store';
       status.tooltip = `No store yet at ${i.db_path}. Capture to create it.`;
-      status.command = 'dbtscope.capture';
+      status.command = 'dbtattic.capture';
     } else {
-      status.text = `$(database) dbtscope: ${i.invocations ?? 0}`;
+      status.text = `$(database) dbtattic: ${i.invocations ?? 0}`;
       const dedup =
         i.node_versions && i.node_rows ? ` (${(i.node_rows / i.node_versions).toFixed(1)}x dedup)` : '';
       status.tooltip = new vscode.MarkdownString(
         [
-          `**dbtscope**`,
+          `**dbtattic**`,
           ``,
           `- store: \`${i.store}\` (from ${i.store_source})`,
           `- invocations: ${i.invocations}`,
@@ -35,7 +35,7 @@ async function refreshStatus(): Promise<void> {
           `- capture: ${i.capture_when}`
         ].join('\n')
       );
-      status.command = 'dbtscope.query';
+      status.command = 'dbtattic.query';
     }
     status.show();
   } catch {
@@ -50,8 +50,8 @@ export function activate(context: vscode.ExtensionContext): void {
   const insights = new InsightsProvider();
 
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('dbtscope.invocations', invocations),
-    vscode.window.registerTreeDataProvider('dbtscope.insights', insights)
+    vscode.window.registerTreeDataProvider('dbtattic.invocations', invocations),
+    vscode.window.registerTreeDataProvider('dbtattic.insights', insights)
   );
 
   status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -64,35 +64,35 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('dbtscope.refresh', refreshAll),
+    vscode.commands.registerCommand('dbtattic.refresh', refreshAll),
 
-    vscode.commands.registerCommand('dbtscope.query', async () => {
+    vscode.commands.registerCommand('dbtattic.query', async () => {
       await panel.show(context, 'Query', DEFAULT_SQL);
     }),
 
-    vscode.commands.registerCommand('dbtscope.runInsight', async (title: string, sql: string) => {
+    vscode.commands.registerCommand('dbtattic.runInsight', async (title: string, sql: string) => {
       await panel.show(context, title, sql);
     }),
 
-    vscode.commands.registerCommand('dbtscope.capture', async () => {
+    vscode.commands.registerCommand('dbtattic.capture', async () => {
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Window, title: 'dbtscope: capturing artifacts' },
+        { location: vscode.ProgressLocation.Window, title: 'dbtattic: capturing artifacts' },
         async () => {
           try {
             await cli.capture();
             await refreshAll();
           } catch (err) {
             vscode.window.showErrorMessage(
-              `dbtscope capture failed: ${err instanceof Error ? err.message : String(err)}`
+              `dbtattic capture failed: ${err instanceof Error ? err.message : String(err)}`
             );
           }
         }
       );
     }),
 
-    vscode.commands.registerCommand('dbtscope.rebuild', async () => {
+    vscode.commands.registerCommand('dbtattic.rebuild', async () => {
       const yes = await vscode.window.showWarningMessage(
-        'Rebuild the dbtscope store from the archived JSON? The archive is the source of truth, so no captured history is lost.',
+        'Rebuild the dbtattic store from the archived JSON? The archive is the source of truth, so no captured history is lost.',
         { modal: true },
         'Rebuild'
       );
@@ -100,45 +100,45 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: 'dbtscope: rebuilding store' },
+        { location: vscode.ProgressLocation.Notification, title: 'dbtattic: rebuilding store' },
         async () => {
           try {
             const out = await cli.rebuild();
-            vscode.window.showInformationMessage(`dbtscope: ${out.trim()}`);
+            vscode.window.showInformationMessage(`dbtattic: ${out.trim()}`);
             await refreshAll();
           } catch (err) {
             vscode.window.showErrorMessage(
-              `dbtscope rebuild failed: ${err instanceof Error ? err.message : String(err)}`
+              `dbtattic rebuild failed: ${err instanceof Error ? err.message : String(err)}`
             );
           }
         }
       );
     }),
 
-    vscode.commands.registerCommand('dbtscope.copyStatePath', async () => {
+    vscode.commands.registerCommand('dbtattic.copyStatePath', async () => {
       try {
         const path = await cli.statePath(true);
         if (!path) {
-          vscode.window.showWarningMessage('dbtscope: no successful invocation in the store yet.');
+          vscode.window.showWarningMessage('dbtattic: no successful invocation in the store yet.');
           return;
         }
         await vscode.env.clipboard.writeText(path);
-        vscode.window.showInformationMessage(`dbtscope: copied --state path for the last successful run.`);
+        vscode.window.showInformationMessage(`dbtattic: copied --state path for the last successful run.`);
       } catch (err) {
         vscode.window.showErrorMessage(
-          `dbtscope: ${err instanceof Error ? err.message : String(err)}`
+          `dbtattic: ${err instanceof Error ? err.message : String(err)}`
         );
       }
     }),
 
-    vscode.commands.registerCommand('dbtscope.openSettings', async () => {
-      await vscode.commands.executeCommand('workbench.action.openSettings', 'dbtscope');
+    vscode.commands.registerCommand('dbtattic.openSettings', async () => {
+      await vscode.commands.executeCommand('workbench.action.openSettings', 'dbtattic');
     })
   );
 
   // The store changes whenever dbt runs; watching it keeps the tree honest
   // without the user having to remember to refresh.
-  const watcher = vscode.workspace.createFileSystemWatcher('**/.dbtscope/store.duckdb');
+  const watcher = vscode.workspace.createFileSystemWatcher('**/.dbtattic/store.duckdb');
   context.subscriptions.push(
     watcher,
     watcher.onDidChange(refreshAll),

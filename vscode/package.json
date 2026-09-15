@@ -1,6 +1,6 @@
 {
-  "name": "dbtscope",
-  "displayName": "dbtscope",
+  "name": "dbtattic",
+  "displayName": "dbtattic",
   "description": "Browse and query your dbt artifact history without leaving the editor.",
   "version": "0.1.0",
   "publisher": "tripleaceme",
@@ -12,19 +12,19 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "dbtscope",
+      "title": "dbtattic",
       "properties": {
-        "dbtscope.cliPath": {
+        "dbtattic.cliPath": {
           "type": "string",
-          "default": "dbtscope",
-          "description": "Path to the dbtscope executable. Point this at a virtualenv's bin/dbtscope if it is not on PATH."
+          "default": "dbtattic",
+          "description": "Path to the dbtattic executable. Point this at a virtualenv's bin/dbtattic if it is not on PATH."
         },
-        "dbtscope.projectDir": {
+        "dbtattic.projectDir": {
           "type": "string",
           "default": "",
           "description": "dbt project root. Empty means auto-discover by searching for dbt_project.yml."
         },
-        "dbtscope.historyLimit": {
+        "dbtattic.historyLimit": {
           "type": "number",
           "default": 25,
           "description": "How many invocations to list in the tree."
@@ -34,37 +34,37 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "dbtscope",
-          "title": "dbtscope",
+          "id": "dbtattic",
+          "title": "dbtattic",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "dbtscope": [
-        { "id": "dbtscope.invocations", "name": "Invocations" },
-        { "id": "dbtscope.insights", "name": "Insights" }
+      "dbtattic": [
+        { "id": "dbtattic.invocations", "name": "Invocations" },
+        { "id": "dbtattic.insights", "name": "Insights" }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "dbtscope.invocations",
-        "contents": "No dbtscope store found yet.\n\nThe store is created the first time artifacts are captured.\n\n[Capture now](command:dbtscope.capture)\n\nIf the CLI is not on your PATH, set `dbtscope.cliPath`.\n\n[Open settings](command:dbtscope.openSettings)"
+        "view": "dbtattic.invocations",
+        "contents": "No dbtattic store found yet.\n\nThe store is created the first time artifacts are captured.\n\n[Capture now](command:dbtattic.capture)\n\nIf the CLI is not on your PATH, set `dbtattic.cliPath`.\n\n[Open settings](command:dbtattic.openSettings)"
       }
     ],
     "commands": [
-      { "command": "dbtscope.refresh", "title": "Refresh", "category": "dbtscope", "icon": "$(refresh)" },
-      { "command": "dbtscope.capture", "title": "Capture Artifacts Now", "category": "dbtscope", "icon": "$(save)" },
-      { "command": "dbtscope.rebuild", "title": "Rebuild Store from Archive", "category": "dbtscope" },
-      { "command": "dbtscope.query", "title": "New Query", "category": "dbtscope", "icon": "$(search)" },
-      { "command": "dbtscope.copyStatePath", "title": "Copy --state Path (Last Success)", "category": "dbtscope" },
-      { "command": "dbtscope.openSettings", "title": "Open Settings", "category": "dbtscope" }
+      { "command": "dbtattic.refresh", "title": "Refresh", "category": "dbtattic", "icon": "$(refresh)" },
+      { "command": "dbtattic.capture", "title": "Capture Artifacts Now", "category": "dbtattic", "icon": "$(save)" },
+      { "command": "dbtattic.rebuild", "title": "Rebuild Store from Archive", "category": "dbtattic" },
+      { "command": "dbtattic.query", "title": "New Query", "category": "dbtattic", "icon": "$(search)" },
+      { "command": "dbtattic.copyStatePath", "title": "Copy --state Path (Last Success)", "category": "dbtattic" },
+      { "command": "dbtattic.openSettings", "title": "Open Settings", "category": "dbtattic" }
     ],
     "menus": {
       "view/title": [
-        { "command": "dbtscope.query", "when": "view == dbtscope.invocations", "group": "navigation@1" },
-        { "command": "dbtscope.capture", "when": "view == dbtscope.invocations", "group": "navigation@2" },
-        { "command": "dbtscope.refresh", "when": "view == dbtscope.invocations", "group": "navigation@3" }
+        { "command": "dbtattic.query", "when": "view == dbtattic.invocations", "group": "navigation@1" },
+        { "command": "dbtattic.capture", "when": "view == dbtattic.invocations", "group": "navigation@2" },
+        { "command": "dbtattic.refresh", "when": "view == dbtattic.invocations", "group": "navigation@3" }
       ]
     }
   },

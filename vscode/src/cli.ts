@@ -1,5 +1,5 @@
 /**
- * Thin wrapper over the dbtscope CLI.
+ * Thin wrapper over the dbtattic CLI.
  *
  * The extension deliberately does NOT embed DuckDB. Shelling out to the CLI
  * keeps the extension free of native dependencies, and keeps one definition of
@@ -39,7 +39,7 @@ export class CliError extends Error {
 }
 
 function config() {
-  return vscode.workspace.getConfiguration('dbtscope');
+  return vscode.workspace.getConfiguration('dbtattic');
 }
 
 function cwd(): string | undefined {
@@ -51,7 +51,7 @@ function cwd(): string | undefined {
 }
 
 export function run(args: string[], timeoutMs = 60_000): Promise<string> {
-  const bin = config().get<string>('cliPath') || 'dbtscope';
+  const bin = config().get<string>('cliPath') || 'dbtattic';
   return new Promise((resolve, reject) => {
     execFile(
       bin,
@@ -63,7 +63,7 @@ export function run(args: string[], timeoutMs = 60_000): Promise<string> {
           if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
             reject(
               new CliError(
-                `dbtscope executable not found at "${bin}". Install it with \`pip install dbtscope\`, or set dbtscope.cliPath to your virtualenv's bin/dbtscope.`,
+                `dbtattic executable not found at "${bin}". Install it with \`pip install dbtattic\`, or set dbtattic.cliPath to your virtualenv's bin/dbtattic.`,
                 stderr,
                 null
               )

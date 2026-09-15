@@ -1,4 +1,4 @@
-"""dbtscope command line interface."""
+"""dbtattic command line interface."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ def _jsonable(v):
 def _open(cfg: config_mod.Config, read_only: bool = True):
     """Open the store, turning a stale schema into an actionable message."""
     if not cfg.db_path.exists():
-        err.print(f"[red]No store at {cfg.db_path}. Run `dbtscope capture` first.[/red]")
+        err.print(f"[red]No store at {cfg.db_path}. Run `dbtattic capture` first.[/red]")
         raise typer.Exit(1)
     try:
         return store.connect(cfg.db_path, read_only=read_only)
@@ -64,7 +64,7 @@ def _report(results: list[capture_mod.CaptureResult], quiet: bool) -> None:
     if quiet:
         bad = [r for r in results if r.status == "error"]
         for r in bad:
-            err.print(f"[yellow]dbtscope: {r.artifact}: {r.detail}[/yellow]")
+            err.print(f"[yellow]dbtattic: {r.artifact}: {r.detail}[/yellow]")
         return
     table = Table(show_header=True, header_style="bold")
     table.add_column("artifact")
@@ -101,13 +101,13 @@ def capture(
 def run(ctx: typer.Context) -> None:
     """Capture, run dbt, capture again. Exit code and output pass straight through.
 
-    Usage: dbtscope run -- dbt build --target prod
+    Usage: dbtattic run -- dbt build --target prod
     """
     argv = list(ctx.args)
     if argv and argv[0] == "--":
         argv = argv[1:]
     if not argv:
-        err.print("[red]Nothing to run. Usage: dbtscope run -- dbt build[/red]")
+        err.print("[red]Nothing to run. Usage: dbtattic run -- dbt build[/red]")
         raise typer.Exit(2)
 
     cfg = _cfg(None, None)
@@ -117,7 +117,7 @@ def run(ctx: typer.Context) -> None:
         try:
             _report(capture_mod.capture(cfg, phase="pre"), quiet=True)
         except Exception as exc:
-            err.print(f"[yellow]dbtscope: pre-capture skipped: {exc}[/yellow]")
+            err.print(f"[yellow]dbtattic: pre-capture skipped: {exc}[/yellow]")
 
     proc = subprocess.run(argv, cwd=cfg.project_dir)
 
@@ -125,7 +125,7 @@ def run(ctx: typer.Context) -> None:
         try:
             _report(capture_mod.capture(cfg, phase="post"), quiet=True)
         except Exception as exc:
-            err.print(f"[yellow]dbtscope: post-capture skipped: {exc}[/yellow]")
+            err.print(f"[yellow]dbtattic: post-capture skipped: {exc}[/yellow]")
 
     raise typer.Exit(proc.returncode)
 
@@ -144,7 +144,7 @@ def state(
     """Restore a historical manifest.json and print its directory.
 
     Feeds dbt's state comparison on any adapter:
-      dbt build --select state:modified --defer --state $(dbtscope state --last-success)
+      dbt build --select state:modified --defer --state $(dbtattic state --last-success)
     """
     cfg = _cfg(store_, project_dir)
     con = _open(cfg)

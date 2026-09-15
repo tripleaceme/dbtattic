@@ -39,7 +39,7 @@ def sh(*args: str, check_rc: bool = True) -> subprocess.CompletedProcess:
 
 
 def scope_json(*args: str) -> dict:
-    return json.loads(sh("dbtscope", *args).stdout)
+    return json.loads(sh("dbtattic", *args).stdout)
 
 
 def query(sql: str) -> list[list]:
@@ -47,12 +47,12 @@ def query(sql: str) -> list[list]:
 
 
 def main() -> int:
-    for stale in (".dbtscope", "target", "logs", "warehouse.duckdb"):
+    for stale in (".dbtattic", "target", "logs", "warehouse.duckdb"):
         p = FIXTURE / stale
         shutil.rmtree(p) if p.is_dir() else p.unlink(missing_ok=True)
 
     print("1. capture around a real dbt build")
-    sh("dbtscope", "run", "--", "dbt", "build")
+    sh("dbtattic", "run", "--", "dbt", "build")
     info = scope_json("info", "--json")
     check("store created", info["exists"])
     check("invocation recorded", info.get("invocations", 0) >= 1, f"{info.get('invocations')} invocations")
@@ -61,7 +61,7 @@ def main() -> int:
 
     print("2. capture is idempotent on invocation_id")
     before = scope_json("info", "--json")["artifacts_captured"]
-    sh("dbtscope", "capture", "--quiet")
+    sh("dbtattic", "capture", "--quiet")
     after = scope_json("info", "--json")["artifacts_captured"]
     check("re-capture adds nothing", before == after, f"{before} -> {after}")
 
@@ -78,15 +78,15 @@ def main() -> int:
         "target/ now holds a mismatched pair",
         manifest_after["metadata"]["invocation_id"] != results_after["metadata"]["invocation_id"],
     )
-    sh("dbtscope", "capture", "--quiet")
+    sh("dbtattic", "capture", "--quiet")
     check(
         "parse recorded as its own invocation with no run results",
         len(query("select 1 from v_run_history where nodes_run = 0")) >= 1,
     )
 
     print("4. node de-duplication")
-    sh("dbtscope", "run", "--", "dbt", "build")
-    sh("dbtscope", "run", "--", "dbt", "build")
+    sh("dbtattic", "run", "--", "dbt", "build")
+    sh("dbtattic", "run", "--", "dbt", "build")
     info = scope_json("info", "--json")
     versions, rows = info["node_versions"], info["node_rows"]
     check("rows grew with invocations", rows > 20, f"{rows} rows")
@@ -105,8 +105,8 @@ def main() -> int:
     try:
         # A trailing comment changes raw_code -- and so the content hash -- while
         # keeping the model valid and its results identical.
-        model.write_text(original.rstrip() + "\n-- dbtscope smoke probe\n")
-        sh("dbtscope", "run", "--", "dbt", "build")
+        model.write_text(original.rstrip() + "\n-- dbtattic smoke probe\n")
+        sh("dbtattic", "run", "--", "dbt", "build")
         changed = query(
             "select count(distinct node_version_id) from node "
             "where unique_id = 'model.jaffle_duck.stg_customers'"
@@ -121,7 +121,7 @@ def main() -> int:
         model.write_text(original)
 
     print("6. state restore drives dbt state comparison")
-    state_dir = sh("dbtscope", "state", "--last-success").stdout.strip()
+    state_dir = sh("dbtattic", "state", "--last-success").stdout.strip()
     check("manifest restored", (Path(state_dir) / "manifest.json").exists(), state_dir)
     sh("dbt", "build")  # bring the warehouse back in line with the restored model
     out = sh("dbt", "build", "--select", "state:modified+", "--state", state_dir, check_rc=False)
@@ -133,7 +133,7 @@ def main() -> int:
 
     print("7. rebuild re-derives the store from the archive")
     before = scope_json("info", "--json")
-    sh("dbtscope", "rebuild")
+    sh("dbtattic", "rebuild")
     after = scope_json("info", "--json")
     check(
         "rebuild preserves invocations",

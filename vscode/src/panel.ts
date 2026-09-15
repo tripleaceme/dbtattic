@@ -144,7 +144,7 @@ async function render(title: string, sql: string): Promise<void> {
 
 export async function show(context: vscode.ExtensionContext, title: string, sql: string): Promise<void> {
   if (!panel) {
-    panel = vscode.window.createWebviewPanel('dbtscope.results', 'dbtscope', vscode.ViewColumn.Active, {
+    panel = vscode.window.createWebviewPanel('dbtattic.results', 'dbtattic', vscode.ViewColumn.Active, {
       enableScripts: true,
       retainContextWhenHidden: true
     });
@@ -159,7 +159,7 @@ export async function show(context: vscode.ExtensionContext, title: string, sql:
       context.subscriptions
     );
   }
-  panel.title = `dbtscope · ${title}`;
+  panel.title = `dbtattic · ${title}`;
   panel.reveal(vscode.ViewColumn.Active, true);
   await render(title, sql);
 }

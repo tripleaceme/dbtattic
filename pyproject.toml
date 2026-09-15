@@ -1,5 +1,5 @@
 [project]
-name = "dbtscope"
+name = "dbtattic"
 version = "0.1.0"
 description = "Preserve and query dbt artifact history on any warehouse, backed by DuckDB."
 readme = "README.md"
@@ -41,24 +41,24 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tripleaceme/dbtscope"
-Repository = "https://github.com/tripleaceme/dbtscope"
-Issues = "https://github.com/tripleaceme/dbtscope/issues"
-Changelog = "https://github.com/tripleaceme/dbtscope/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/tripleaceme/dbtattic"
+Repository = "https://github.com/tripleaceme/dbtattic"
+Issues = "https://github.com/tripleaceme/dbtattic/issues"
+Changelog = "https://github.com/tripleaceme/dbtattic/blob/main/CHANGELOG.md"
 
 [project.scripts]
-dbtscope = "dbtscope.cli:app"
+dbtattic = "dbtattic.cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/dbtscope"]
+packages = ["src/dbtattic"]
 
 [tool.hatch.build.targets.sdist]
 # The VS Code extension is a separate artefact shipped to the marketplace, so it
 # stays out of the Python sdist -- and with it node_modules, which hatchling
 # would otherwise sweep in.
-only-include = ["src/dbtscope", "README.md", "LICENSE", "CHANGELOG.md", "dbtscope.example.yml"]
+only-include = ["src/dbtattic", "README.md", "LICENSE", "CHANGELOG.md", "dbtattic.example.yml"]
 exclude = ["vscode", "tests/fixtures/*/target", "tests/fixtures/*/logs"]
