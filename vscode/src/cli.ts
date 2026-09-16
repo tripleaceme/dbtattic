@@ -7,6 +7,8 @@
  */
 
 import { execFile } from 'child_process';
+import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 export interface QueryResult {
@@ -42,16 +44,34 @@ function config() {
   return vscode.workspace.getConfiguration('dbtattic');
 }
 
+/**
+ * VS Code only expands ${workspaceFolder} in launch.json and tasks.json, so a
+ * plain setting read through getConfiguration() arrives as a literal string.
+ * Pointing cliPath at a project virtualenv is the common case, so expand it
+ * here rather than letting it fail as a missing executable.
+ */
+function expand(value: string): string {
+  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+  let out = value
+    .replace(/\$\{workspaceFolder\}/g, folder)
+    .replace(/\$\{workspaceRoot\}/g, folder)
+    .replace(/\$\{userHome\}/g, os.homedir());
+  if (out.startsWith('~/')) {
+    out = path.join(os.homedir(), out.slice(2));
+  }
+  return out;
+}
+
 function cwd(): string | undefined {
   const configured = config().get<string>('projectDir');
   if (configured) {
-    return configured;
+    return expand(configured);
   }
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 }
 
 export function run(args: string[], timeoutMs = 60_000): Promise<string> {
-  const bin = config().get<string>('cliPath') || 'dbtattic';
+  const bin = expand(config().get<string>('cliPath') || 'dbtattic');
   return new Promise((resolve, reject) => {
     execFile(
       bin,

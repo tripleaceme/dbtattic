@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!--
+    dbtattic mark: an attic sitting on top of the data layers.
+
+    Deliberately NOT dbt Labs' logo — their trademark policy disallows using
+    their marks inside another product's logo. The three stacked layers read as
+    the transformation stack (raw -> staging -> marts) without reproducing any
+    trademarked asset, and the roof overhangs them: the attic is above your
+    warehouse, holding what dbt would otherwise throw away.
+  -->
+  <rect width="128" height="128" rx="27" fill="#222835"/>
+
+  <!-- roof, eaves overhanging the stack it rests on -->
+  <path d="M64 20 L112 55 H16 Z" fill="#FF6B35"/>
+  <!-- attic window, punched through to the background -->
+  <circle cx="64" cy="43.5" r="6.2" fill="#222835"/>
+
+  <!-- the data layers the attic sits on: raw -> staging -> marts -->
+  <rect x="27" y="60"  width="74" height="14" rx="7" fill="#EEF2F8"/>
+  <rect x="27" y="79"  width="74" height="14" rx="7" fill="#AEBBCE"/>
+  <rect x="27" y="98"  width="74" height="14" rx="7" fill="#71809A"/>
+</svg>

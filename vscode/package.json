@@ -5,10 +5,29 @@
   "version": "0.1.0",
   "publisher": "tripleaceme",
   "license": "Apache-2.0",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Data Science", "Visualization", "Other"],
-  "keywords": ["dbt", "duckdb", "analytics engineering", "data", "lineage"],
-  "activationEvents": ["workspaceContains:**/dbt_project.yml"],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Data Science",
+    "Visualization",
+    "Other"
+  ],
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#222835",
+    "theme": "dark"
+  },
+  "keywords": [
+    "dbt",
+    "duckdb",
+    "analytics engineering",
+    "data",
+    "lineage"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/dbt_project.yml"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -17,12 +36,12 @@
         "dbtattic.cliPath": {
           "type": "string",
           "default": "dbtattic",
-          "description": "Path to the dbtattic executable. Point this at a virtualenv's bin/dbtattic if it is not on PATH."
+          "description": "Path to the dbtattic executable. Supports ${workspaceFolder} and ~, so a project virtualenv can be referenced as ${workspaceFolder}/.venv/bin/dbtattic."
         },
         "dbtattic.projectDir": {
           "type": "string",
           "default": "",
-          "description": "dbt project root. Empty means auto-discover by searching for dbt_project.yml."
+          "description": "dbt project root. Empty means auto-discover by searching for dbt_project.yml. Supports ${workspaceFolder} and ~."
         },
         "dbtattic.historyLimit": {
           "type": "number",
@@ -42,8 +61,14 @@
     },
     "views": {
       "dbtattic": [
-        { "id": "dbtattic.invocations", "name": "Invocations" },
-        { "id": "dbtattic.insights", "name": "Insights" }
+        {
+          "id": "dbtattic.invocations",
+          "name": "Invocations"
+        },
+        {
+          "id": "dbtattic.insights",
+          "name": "Insights"
+        }
       ]
     },
     "viewsWelcome": [
@@ -53,18 +78,57 @@
       }
     ],
     "commands": [
-      { "command": "dbtattic.refresh", "title": "Refresh", "category": "dbtattic", "icon": "$(refresh)" },
-      { "command": "dbtattic.capture", "title": "Capture Artifacts Now", "category": "dbtattic", "icon": "$(save)" },
-      { "command": "dbtattic.rebuild", "title": "Rebuild Store from Archive", "category": "dbtattic" },
-      { "command": "dbtattic.query", "title": "New Query", "category": "dbtattic", "icon": "$(search)" },
-      { "command": "dbtattic.copyStatePath", "title": "Copy --state Path (Last Success)", "category": "dbtattic" },
-      { "command": "dbtattic.openSettings", "title": "Open Settings", "category": "dbtattic" }
+      {
+        "command": "dbtattic.refresh",
+        "title": "Refresh",
+        "category": "dbtattic",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dbtattic.capture",
+        "title": "Capture Artifacts Now",
+        "category": "dbtattic",
+        "icon": "$(save)"
+      },
+      {
+        "command": "dbtattic.rebuild",
+        "title": "Rebuild Store from Archive",
+        "category": "dbtattic"
+      },
+      {
+        "command": "dbtattic.query",
+        "title": "New Query",
+        "category": "dbtattic",
+        "icon": "$(search)"
+      },
+      {
+        "command": "dbtattic.copyStatePath",
+        "title": "Copy --state Path (Last Success)",
+        "category": "dbtattic"
+      },
+      {
+        "command": "dbtattic.openSettings",
+        "title": "Open Settings",
+        "category": "dbtattic"
+      }
     ],
     "menus": {
       "view/title": [
-        { "command": "dbtattic.query", "when": "view == dbtattic.invocations", "group": "navigation@1" },
-        { "command": "dbtattic.capture", "when": "view == dbtattic.invocations", "group": "navigation@2" },
-        { "command": "dbtattic.refresh", "when": "view == dbtattic.invocations", "group": "navigation@3" }
+        {
+          "command": "dbtattic.query",
+          "when": "view == dbtattic.invocations",
+          "group": "navigation@1"
+        },
+        {
+          "command": "dbtattic.capture",
+          "when": "view == dbtattic.invocations",
+          "group": "navigation@2"
+        },
+        {
+          "command": "dbtattic.refresh",
+          "when": "view == dbtattic.invocations",
+          "group": "navigation@3"
+        }
       ]
     }
   },

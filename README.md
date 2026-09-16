@@ -1,3 +1,5 @@
+<img src="vscode/media/logo.svg" width="96" align="right" alt="">
+
 # dbtattic
 
 [![CI](https://github.com/tripleaceme/dbtattic/actions/workflows/ci.yml/badge.svg)](https://github.com/tripleaceme/dbtattic/actions/workflows/ci.yml)

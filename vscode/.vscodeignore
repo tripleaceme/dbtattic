@@ -3,3 +3,4 @@ src/**
 node_modules/**
 tsconfig.json
 **/*.map
+media/logo-256.png
