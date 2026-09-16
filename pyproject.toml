@@ -1,6 +1,6 @@
 [project]
 name = "dbtattic"
-version = "0.1.0"
+version = "0.1.1"
 description = "Preserve and query dbt artifact history on any warehouse, backed by DuckDB."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -47,7 +47,7 @@ Issues = "https://github.com/tripleaceme/dbtattic/issues"
 Changelog = "https://github.com/tripleaceme/dbtattic/blob/main/CHANGELOG.md"
 
 [project.scripts]
-dbtattic = "dbtattic.cli:app"
+dbtattic = "dbtattic.cli:main"
 
 [build-system]
 requires = ["hatchling"]

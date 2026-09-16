@@ -18,9 +18,44 @@ from . import capture as capture_mod
 from . import config as config_mod
 from . import store
 
+BANNER = r"""
+     _ _     _        _   _   _
+  __| | |__ | |_ __ _| |_| |_(_) ___
+ / _` | '_ \| __/ _` | __| __| |/ __|
+| (_| | |_) | || (_| | |_| |_| | (__
+ \__,_|_.__/ \__\__,_|\__|\__|_|\___|
+"""
+
+EPILOG = """[bold]Typical first run[/bold]
+
+  dbtattic run -- dbt build     run dbt, keeping the artifacts either side
+  dbtattic history              what has run, what failed, how long
+  dbtattic info                 where the archive is and what is in it
+
+[bold]Slim CI on any warehouse[/bold]
+
+  dbt build --select state:modified+ --defer \\
+            --state $(dbtattic state --last-success)
+
+[bold]Every command takes --help[/bold], e.g. [cyan]dbtattic state --help[/cyan]
+
+The archive is JSON on disk plus one DuckDB file, by default at [cyan]./.dbtattic[/cyan]
+(set [cyan]store:[/cyan] in [cyan]dbtattic.yml[/cyan], or [cyan]$DBTATTIC_STORE[/cyan]). No warehouse compute,
+nothing uploaded anywhere.
+"""
+
 app = typer.Typer(
     add_completion=False,
-    help="Preserve and query dbt artifact history on any warehouse, backed by DuckDB.",
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+    help=(
+        "[bold]Preserve and query dbt artifact history, on any warehouse.[/bold]\n\n"
+        "dbt overwrites [cyan]target/[/cyan] on every invocation, and a bare "
+        "[cyan]dbt parse[/cyan] is enough to destroy the manifest from your last real "
+        "build. This keeps those artifacts and makes them queryable in DuckDB. "
+        "No warehouse compute, no dbt Cloud, every adapter."
+    ),
+    epilog=EPILOG,
 )
 console = Console()
 err = Console(stderr=True)
@@ -82,14 +117,25 @@ def _report(results: list[capture_mod.CaptureResult], quiet: bool) -> None:
     console.print(table)
 
 
-@app.command()
+@app.command(epilog="""[bold]Examples[/bold]
+
+  dbtattic capture                      keep whatever is in target/ right now
+  dbtattic capture --phase pre          label it as taken before a run
+  dbtattic capture --quiet              only speak up on error, for shell hooks
+""")
 def capture(
     store_: str = StoreOpt,
     project_dir: Path = ProjOpt,
     phase: str = typer.Option("manual", "--phase", help="pre | post | manual"),
     quiet: bool = typer.Option(False, "--quiet", "-q"),
 ) -> None:
-    """Capture whatever artifacts are currently in target/. Idempotent."""
+    """Archive the artifacts in target/ before dbt overwrites them.
+
+    Safe to run repeatedly. Each artifact is keyed by the invocation_id in its
+    own metadata, so re-running captures nothing twice -- and a target/ holding
+    a manifest from one invocation beside run results from another is recorded
+    correctly as two invocations rather than one corrupt row.
+    """
     cfg = _cfg(store_, project_dir)
     results = capture_mod.capture(cfg, phase=phase)
     _report(results, quiet)
@@ -97,11 +143,24 @@ def capture(
 
 @app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    epilog="""[bold]Examples[/bold]
+
+  dbtattic run -- dbt build
+  dbtattic run -- dbt build --target prod --select marts
+  dbtattic run -- dbt test
+""",
 )
 def run(ctx: typer.Context) -> None:
-    """Capture, run dbt, capture again. Exit code and output pass straight through.
+    """Run dbt with a capture either side. Your command, unchanged.
 
-    Usage: dbtattic run -- dbt build --target prod
+    Captures before the run, because dbt overwrites manifest.json during
+    parsing, and again afterwards for the results. Exit code, stdout and stderr
+    pass straight through, and a capture failure is a warning -- never a broken
+    dbt run.
+
+    To capture in front of every dbt command without retyping anything, add a
+    shell function instead: dbt() { dbtattic capture --quiet --phase pre;
+    command dbt "$@"; }
     """
     argv = list(ctx.args)
     if argv and argv[0] == "--":
@@ -130,7 +189,30 @@ def run(ctx: typer.Context) -> None:
     raise typer.Exit(proc.returncode)
 
 
-@app.command()
+@app.command(epilog="""[bold]Examples[/bold]
+
+  dbtattic history                      the last 20 invocations
+  dbtattic history --limit 100
+
+Runs showing 0 nodes are parse, compile or ls: they executed nothing but
+still overwrote your manifest, which is why they are worth keeping.
+""")
+def history(store_: str = StoreOpt, project_dir: Path = ProjOpt, limit: int = 20) -> None:
+    """Recent invocations: what ran, what failed, how long it took."""
+    cfg = _cfg(store_, project_dir)
+    con = _open(cfg)
+    con.sql(f"select * from v_run_history limit {int(limit)}").show(max_rows=limit)
+    con.close()
+
+
+@app.command(epilog="""[bold]Examples[/bold]
+
+  dbt build --select state:modified+ --defer \\
+            --state $(dbtattic state --last-success)
+
+  dbtattic state --target prod          the last prod manifest
+  dbtattic state --invocation 0c503aa2  one specific run
+""")
 def state(
     store_: str = StoreOpt,
     project_dir: Path = ProjOpt,
@@ -141,10 +223,13 @@ def state(
     target: str = typer.Option(None, "--target", help="Only consider this dbt target."),
     out: Path = typer.Option(None, "--out", help="Directory to restore into."),
 ) -> None:
-    """Restore a historical manifest.json and print its directory.
+    """Restore a past manifest, for --state and --defer on any warehouse.
 
-    Feeds dbt's state comparison on any adapter:
-      dbt build --select state:modified --defer --state $(dbtattic state --last-success)
+    Prints the directory it restored into, so it can be used inline. This is
+    what gives you state:modified and deferral without dbt Cloud or Snowflake
+    dbt Projects -- the manifest dbt wants has simply been kept.
+
+    Only the path goes to stdout, so $(...) stays clean.
     """
     cfg = _cfg(store_, project_dir)
     con = _open(cfg)
@@ -191,7 +276,15 @@ def state(
     print(dest_dir)  # stdout stays clean so it can be used in $( )
 
 
-@app.command()
+@app.command(epilog="""[bold]Examples[/bold]
+
+  dbtattic query "select * from v_node_runtime where name = 'fct_orders'"
+  dbtattic query "select * from v_test_history where failures > 0"
+  dbtattic query --json "select * from v_run_history"     for tooling
+
+[bold]Tables[/bold]  invocation, node, run_result, node_depends_on, node_version
+[bold]Views[/bold]   v_run_history, v_node_runtime, v_test_history, v_node_changes
+""")
 def query(
     sql: str = typer.Argument(None, help="SQL to run. Omitted: reads from stdin."),
     store_: str = StoreOpt,
@@ -199,7 +292,11 @@ def query(
     json_out: bool = typer.Option(False, "--json", help="Emit JSON (for the VS Code extension)."),
     limit: int = typer.Option(50, "--limit", help="Max rows to render."),
 ) -> None:
-    """Run SQL against the store."""
+    """Escape hatch: run SQL directly against the archive.
+
+    The store is plain DuckDB, so anything DuckDB can do it can do -- including
+    recursive CTEs over node_depends_on for lineage and blast radius.
+    """
     cfg = _cfg(store_, project_dir)
     con = _open(cfg)
     try:
@@ -230,21 +327,16 @@ def query(
         con.close()
 
 
-@app.command()
-def history(store_: str = StoreOpt, project_dir: Path = ProjOpt, limit: int = 20) -> None:
-    """Show recent invocations."""
-    cfg = _cfg(store_, project_dir)
-    con = _open(cfg)
-    con.sql(f"select * from v_run_history limit {int(limit)}").show(max_rows=limit)
-    con.close()
+@app.command(epilog="""[bold]Examples[/bold]
 
-
-@app.command()
+  dbtattic rebuild                      re-derive after an upgrade
+""")
 def rebuild(store_: str = StoreOpt, project_dir: Path = ProjOpt) -> None:
-    """Re-derive the store from the archived JSON.
+    """Re-derive the DuckDB store from the archived JSON.
 
-    The archive is the source of truth, so this is how a schema change or a
-    fixed extraction bug is applied to history that was already captured.
+    The archived JSON is the source of truth and DuckDB is a cache built from
+    it, so an upgrade or a fixed extraction bug is a rebuild rather than a
+    migration. Nothing captured is ever lost to a bad parse.
     """
     cfg = _cfg(store_, project_dir)
     if not cfg.archive_dir.exists():
@@ -258,13 +350,20 @@ def rebuild(store_: str = StoreOpt, project_dir: Path = ProjOpt) -> None:
         err.print(f"[red]{r.artifact} {r.invocation_id[:8]}: {r.detail}[/red]")
 
 
-@app.command()
+@app.command(epilog="""[bold]Examples[/bold]
+
+  dbtattic info                         resolved config and store contents
+  dbtattic info --json                  the same, for tooling
+
+Store location resolves in this order, first wins:
+  --store  >  $DBTATTIC_STORE  >  dbtattic.yml  >  vars.dbtattic  >  ./.dbtattic
+""")
 def info(
     store_: str = StoreOpt,
     project_dir: Path = ProjOpt,
     json_out: bool = typer.Option(False, "--json", help="Emit JSON (for the VS Code extension)."),
 ) -> None:
-    """Show resolved configuration and store contents."""
+    """Where the archive lives, what is in it, and which setting chose it."""
     cfg = _cfg(store_, project_dir)
 
     if json_out:
@@ -323,5 +422,18 @@ def info(
         console.print("[dim]store not created yet[/dim]")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Console-script entry point.
+
+    The banner is printed here rather than from a Typer callback because
+    `--help` short-circuits inside Click before any callback runs, and rich
+    would reflow the ASCII art if it were part of the help string.
+    """
+    argv = sys.argv[1:]
+    if not argv or argv[0] in {"-h", "--help"}:
+        console.print(f"[#ff6b35]{BANNER}[/#ff6b35]", highlight=False)
     app()
+
+
+if __name__ == "__main__":
+    main()
