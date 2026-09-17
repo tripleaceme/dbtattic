@@ -40,8 +40,7 @@ EPILOG = """[bold]Typical first run[/bold]
 [bold]Every command takes --help[/bold], e.g. [cyan]dbtattic state --help[/cyan]
 
 The archive is JSON on disk plus one DuckDB file, by default at [cyan]./.dbtattic[/cyan]
-(set [cyan]store:[/cyan] in [cyan]dbtattic.yml[/cyan], or [cyan]$DBTATTIC_STORE[/cyan]). No warehouse compute,
-nothing uploaded anywhere.
+(set [cyan]store:[/cyan] in [cyan]dbtattic.yml[/cyan], or [cyan]$DBTATTIC_STORE[/cyan]).
 """
 
 app = typer.Typer(

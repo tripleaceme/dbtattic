@@ -2,7 +2,7 @@
   "name": "dbtattic",
   "displayName": "dbtattic",
   "description": "Browse and query your dbt artifact history without leaving the editor.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "tripleaceme",
   "license": "Apache-2.0",
   "engines": {
