@@ -11,6 +11,19 @@ import * as cli from './cli';
 
 type Kind = 'invocation' | 'node' | 'insight' | 'message';
 
+/**
+ * Drives which viewsWelcome block renders when the tree is empty. Welcome
+ * content wraps and can hold command buttons, which a tree item cannot.
+ */
+let lastStatus = '';
+async function setStatus(status: string): Promise<void> {
+  if (status === lastStatus) {
+    return;
+  }
+  lastStatus = status;
+  await vscode.commands.executeCommand('setContext', 'dbtattic.status', status);
+}
+
 export class Item extends vscode.TreeItem {
   constructor(
     label: string,
@@ -50,10 +63,21 @@ export class InvocationsProvider implements vscode.TreeDataProvider<Item> {
 
   async getChildren(item?: Item): Promise<Item[]> {
     try {
-      return item ? await this.nodesFor(item) : await this.invocations();
+      const children = item ? await this.nodesFor(item) : await this.invocations();
+      await setStatus('ready');
+      return children;
     } catch (err) {
+      const kind = err instanceof cli.CliError ? err.kind : 'other';
+      await setStatus(kind);
+      // A tree item is a single unwrappable line, so anything longer than the
+      // sidebar is truncated to "No dbt_project.yml fo...". These states are
+      // handed to viewsWelcome instead, which wraps and can carry buttons.
+      if (kind !== 'other') {
+        return [];
+      }
       const message = err instanceof Error ? err.message : String(err);
-      const node = new Item(message, 'message', vscode.TreeItemCollapsibleState.None);
+      const node = new Item(message.split('\n')[0], 'message', vscode.TreeItemCollapsibleState.None);
+      node.tooltip = message;
       node.iconPath = new vscode.ThemeIcon('warning');
       return [node];
     }
@@ -123,17 +147,22 @@ export class InvocationsProvider implements vscode.TreeDataProvider<Item> {
 }
 
 interface Insight {
+  /** Kept short: a tree item is one unwrappable line and the sidebar is narrow. */
   label: string;
   detail: string;
   icon: string;
+  /** The full explanation, which has room to breathe in a hover. */
+  tooltip: string;
   sql: string;
 }
 
 /** The questions a single run cannot answer -- which is the whole point of keeping history. */
 const INSIGHTS: Insight[] = [
   {
-    label: 'Runtime regressions',
-    detail: 'slowest vs their own median',
+    label: 'Slow models',
+    detail: 'vs own median',
+    tooltip:
+      'Nodes whose worst run is well off their own median. Needs at least 3 runs before a node is judged.',
     icon: 'graph-line',
     sql: `with stats as (
   select unique_id, name,
@@ -152,8 +181,10 @@ select name, round(median_s,3) as median_s, round(worst_s,3) as worst_s,
  order by x_slower desc`
   },
   {
-    label: 'Flaky and skipped tests',
-    detail: 'failure rate across runs',
+    label: 'Flaky tests',
+    detail: 'failures and skips',
+    tooltip:
+      'Failure rate per test across every captured run. A test that is always skipped is its own signal: something upstream keeps failing, so it has not actually been checking anything.',
     icon: 'beaker',
     sql: `select name, runs, passes, failures, skipped, failure_pct, last_seen
   from v_test_history
@@ -161,8 +192,10 @@ select name, round(median_s,3) as median_s, round(worst_s,3) as worst_s,
  order by failure_pct desc nulls last, skipped desc`
   },
   {
-    label: 'Recently changed models',
-    detail: 'content hash changed between runs',
+    label: 'Changed models',
+    detail: 'content hash moved',
+    tooltip:
+      'Models whose content hash changed between runs. This is the incident-forensics view: the numbers moved on Tuesday, what deployed on Tuesday?',
     icon: 'git-commit',
     sql: `select name, resource_type, node_version_id[1:8] as version,
        first_seen, last_seen, invocations
@@ -173,8 +206,10 @@ select name, round(median_s,3) as median_s, round(worst_s,3) as worst_s,
  order by first_seen desc`
   },
   {
-    label: 'Invocations that destroyed a manifest',
-    detail: 'parse / compile / ls runs',
+    label: 'Lost manifests',
+    detail: 'parse, compile, ls',
+    tooltip:
+      'Invocations that executed no nodes but still overwrote manifest.json: dbt parse, compile and ls, plus the background parsing your editor does on its own.',
     icon: 'warning',
     sql: `select invocation_id, generated_at, command, target
   from v_run_history
@@ -183,7 +218,9 @@ select name, round(median_s,3) as median_s, round(worst_s,3) as worst_s,
   },
   {
     label: 'Store contents',
-    detail: 'what is captured, and de-duplication',
+    detail: 'counts and dedup',
+    tooltip:
+      'What the archive holds, and how much node de-duplication is buying you.',
     icon: 'database',
     sql: `select 'invocations' as metric, count(*)::varchar as value from invocation
 union all select 'artifacts captured', count(*)::varchar from artifact_capture
@@ -211,6 +248,7 @@ export class InsightsProvider implements vscode.TreeDataProvider<Item> {
     return INSIGHTS.map((i) => {
       const item = new Item(i.label, 'insight', vscode.TreeItemCollapsibleState.None, undefined, i.sql);
       item.description = i.detail;
+      item.tooltip = new vscode.MarkdownString(`**${i.label}**\n\n${i.tooltip}`);
       item.iconPath = new vscode.ThemeIcon(i.icon);
       item.command = {
         command: 'dbtattic.runInsight',

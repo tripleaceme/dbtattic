@@ -133,6 +133,48 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand('dbtattic.openSettings', async () => {
       await vscode.commands.executeCommand('workbench.action.openSettings', 'dbtattic');
+    }),
+
+    vscode.commands.registerCommand('dbtattic.selectProject', async () => {
+      const picked = await vscode.window.showOpenDialog({
+        canSelectFolders: true,
+        canSelectFiles: false,
+        canSelectMany: false,
+        openLabel: 'Use this dbt project',
+        title: 'Select the folder containing dbt_project.yml',
+        defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri
+      });
+      if (!picked?.length) {
+        return;
+      }
+      const dir = picked[0];
+
+      // Validate here rather than letting the tree fail later with a message
+      // the sidebar is too narrow to show.
+      try {
+        await vscode.workspace.fs.stat(vscode.Uri.joinPath(dir, 'dbt_project.yml'));
+      } catch {
+        const retry = await vscode.window.showErrorMessage(
+          `No dbt_project.yml in ${dir.fsPath}. Pick the folder that contains it.`,
+          'Choose another folder'
+        );
+        if (retry) {
+          await vscode.commands.executeCommand('dbtattic.selectProject');
+        }
+        return;
+      }
+
+      // Workspace scope when there is a workspace, so the choice travels with
+      // the project rather than following the user to unrelated folders.
+      const target = vscode.workspace.workspaceFolders?.length
+        ? vscode.ConfigurationTarget.Workspace
+        : vscode.ConfigurationTarget.Global;
+      await vscode.workspace
+        .getConfiguration('dbtattic')
+        .update('projectDir', dir.fsPath, target);
+
+      await refreshAll();
+      vscode.window.showInformationMessage(`dbtattic: using dbt project at ${dir.fsPath}`);
     })
   );
 

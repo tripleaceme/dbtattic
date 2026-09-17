@@ -34,10 +34,35 @@ export interface StoreInfo {
   message?: string;
 }
 
+/** What went wrong, so the UI can offer the right way out of it. */
+export type CliErrorKind = 'no-cli' | 'no-project' | 'stale-store' | 'no-store' | 'other';
+
 export class CliError extends Error {
-  constructor(message: string, readonly stderr: string, readonly code: number | null) {
+  constructor(
+    message: string,
+    readonly stderr: string,
+    readonly code: number | null,
+    readonly kind: CliErrorKind = 'other'
+  ) {
     super(message);
   }
+}
+
+function classify(stderr: string): CliErrorKind {
+  // rich wraps CLI output at 80 columns when stdout is not a TTY, which it
+  // never is here, so a phrase can be split across lines. Collapse whitespace
+  // before matching rather than depending on where the wrap happened to land.
+  const s = stderr.toLowerCase().replace(/\s+/g, ' ');
+  if (s.includes('dbt_project.yml')) {
+    return 'no-project';
+  }
+  if (s.includes('store schema is v')) {
+    return 'stale-store';
+  }
+  if (s.includes('no store at')) {
+    return 'no-store';
+  }
+  return 'other';
 }
 
 function config() {
@@ -85,7 +110,8 @@ export function run(args: string[], timeoutMs = 60_000): Promise<string> {
               new CliError(
                 `dbtattic executable not found at "${bin}". Install it with \`pip install dbtattic\`, or set dbtattic.cliPath to your virtualenv's bin/dbtattic.`,
                 stderr,
-                null
+                null,
+                'no-cli'
               )
             );
             return;
@@ -96,7 +122,8 @@ export function run(args: string[], timeoutMs = 60_000): Promise<string> {
             resolve(stdout);
             return;
           }
-          reject(new CliError(stderr.trim() || err.message, stderr, typeof code === 'number' ? code : null));
+          const rc = typeof code === 'number' ? code : null;
+          reject(new CliError(stderr.trim() || err.message, stderr, rc, classify(stderr)));
           return;
         }
         resolve(stdout);

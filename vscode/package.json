@@ -2,7 +2,7 @@
   "name": "dbtattic",
   "displayName": "dbtattic",
   "description": "Browse and query your dbt artifact history without leaving the editor.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "tripleaceme",
   "license": "Apache-2.0",
   "engines": {
@@ -74,7 +74,23 @@
     "viewsWelcome": [
       {
         "view": "dbtattic.invocations",
-        "contents": "No dbtattic store found yet.\n\nThe store is created the first time artifacts are captured.\n\n[Capture now](command:dbtattic.capture)\n\nIf the CLI is not on your PATH, set `dbtattic.cliPath`.\n\n[Open settings](command:dbtattic.openSettings)"
+        "contents": "No dbt project found here.\n\ndbtattic looks for `dbt_project.yml` in this folder and its parents. If your project lives somewhere else, point at it:\n\n[Select dbt Project Folder](command:dbtattic.selectProject)\n\nYou can also open the project as your workspace folder instead.",
+        "when": "dbtattic.status == 'no-project'"
+      },
+      {
+        "view": "dbtattic.invocations",
+        "contents": "The dbtattic command line tool was not found.\n\nInstall it, then reload:\n\n```\npip install dbtattic\n```\n\nIf it lives in a project virtualenv, set the path to it (`${workspaceFolder}` is supported):\n\n[Open Settings](command:dbtattic.openSettings)",
+        "when": "dbtattic.status == 'no-cli'"
+      },
+      {
+        "view": "dbtattic.invocations",
+        "contents": "Nothing captured yet.\n\ndbt overwrites `target/` on every invocation. Capture what is there now, or run dbt through dbtattic so it is kept automatically.\n\n[Capture Artifacts Now](command:dbtattic.capture)",
+        "when": "dbtattic.status == 'no-store' || dbtattic.status == 'ready'"
+      },
+      {
+        "view": "dbtattic.invocations",
+        "contents": "The archive was written by an older dbtattic.\n\nThe archived JSON is the source of truth, so rebuilding loses nothing.\n\n[Rebuild Store](command:dbtattic.rebuild)",
+        "when": "dbtattic.status == 'stale-store'"
       }
     ],
     "commands": [
@@ -110,6 +126,12 @@
         "command": "dbtattic.openSettings",
         "title": "Open Settings",
         "category": "dbtattic"
+      },
+      {
+        "command": "dbtattic.selectProject",
+        "title": "Select dbt Project Folder...",
+        "category": "dbtattic",
+        "icon": "$(folder-opened)"
       }
     ],
     "menus": {
@@ -128,6 +150,11 @@
           "command": "dbtattic.refresh",
           "when": "view == dbtattic.invocations",
           "group": "navigation@3"
+        },
+        {
+          "command": "dbtattic.selectProject",
+          "when": "view == dbtattic.invocations",
+          "group": "navigation@0"
         }
       ]
     }
